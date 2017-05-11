@@ -46,61 +46,75 @@ DefAns = struct([]);
 Options.Resize = 'on';
 Boxsize = 200;
 
-Prompt(1,:)= {'Enter the working directory:','WorkDir',[]};
+Prompt(1,:) = {'Enter the working directory:','WorkDir',[]};
 Formats(1,1).type = 'edit';
 Formats(1,1).format = 'text';
 Formats(1,1).size = 1.5*Boxsize;
 DefAns(1).WorkDir = 'C:\Users\HIPadmin\Desktop\Probestation\Development';
 
 c=clock;
-Prompt(2,:)= {'Enter name for output file (automatically .txt):','FileName',[]};
+Prompt(2,:) = {'Enter name for output file (automatically .txt):','FileName',[]};
 Formats(2,1).type = 'edit';
 Formats(2,1).format = 'text';
 Formats(2,1).size = Boxsize;
 DefAns(1).FileName = ['HIP_BLT1_MOS_noimpl_T11_43Gy_1kHz@_CV_' num2str(c(3)) '_' num2str(c(2)) '_' ...
     num2str(c(1)) '_' num2str(c(4)) '_' num2str(c(5),'%02d')];
 
-Prompt(3,:)= {'Enter initial voltage (in Volts):','InitialVoltage',[]};
+Prompt(3,:) = {'Enter initial voltage (in Volts):','InitialVoltage',[]};
 Formats(3,1).type = 'edit';
 Formats(3,1).format = 'integer';
 Formats(3,1).size = Boxsize;
 DefAns(1).InitialVoltage = 10;
 
-Prompt(4,:)= {'Enter final voltage (in Volts):','FinalVoltage',[]};
+Prompt(4,:) = {'Enter final voltage (in Volts):','FinalVoltage',[]};
 Formats(4,1).type = 'edit';
 Formats(4,1).format = 'integer';
 Formats(4,1).size = Boxsize;
 DefAns(1).FinalVoltage = -10;
 
-Prompt(5,:)= {'Enter the number of measurement steps:','MeasSteps',[]};
+Prompt(5,:) = {'Enter the number of measurement steps:','MeasSteps',[]};
 Formats(5,1).type = 'edit';
 Formats(5,1).format = 'integer';
 Formats(5,1).size = Boxsize;
 DefAns(1).MeasSteps = 21;
 
-Prompt(6,:) ={'Enter the number of measurements at a voltage step:','NMeas',[]};
-Formats(6,1).type = 'edit';
-Formats(6,1).format = 'integer';
-Formats(6,1).size = Boxsize;
+Prompt(6,:)         = {'Use file specified voltages?','FileVoltages',[]};
+Formats(6,1).type   = 'list';
+Formats(6,1).format = 'text';
+Formats(6,1).style  = 'radiobutton';
+Formats(6,1).items  = {'YES' 'NO'};
+DefAns(1).FileVoltages = 'NO';
+
+Prompt(7,:) = {'Enter a path to a file specifying voltage values:','VoltPath',[]};
+Formats(7,1).type = 'edit';
+Formats(7,1).format = 'text';
+Formats(7,1).size = Boxsize;
+DefAns(1).VoltPath = 'voltages.txt';
+
+
+Prompt(8,:) = {'Enter the number of measurements at a voltage step:','NMeas',[]};
+Formats(8,1).type = 'edit';
+Formats(8,1).format = 'integer';
+Formats(8,1).size = Boxsize;
 DefAns(1).NMeas = 3;
 
-Prompt(7,:) ={'Enter delay between measurements (s):','MeasDelay',[]};
-Formats(7,1).type = 'edit';
-Formats(7,1).format = 'integer';
-Formats(7,1).size = Boxsize;
+Prompt(9,:) = {'Enter delay between measurements (s):','MeasDelay',[]};
+Formats(9,1).type = 'edit';
+Formats(9,1).format = 'integer';
+Formats(9,1).size = Boxsize;
 DefAns(1).MeasDelay = 3;
 
-Prompt(8,:)  = {'Measurement Frequency (20Hz - 1MHz)', 'Frequency',[]};
-Formats(8,1).type   = 'edit';
-Formats(8,1).format = 'text';
-Formats(8,1).size   = Boxsize; % automatically assign the height
+Prompt(10,:)  = {'Measurement Frequency (20Hz - 1MHz)', 'Frequency',[]};
+Formats(10,1).type   = 'edit';
+Formats(10,1).format = 'text';
+Formats(10,1).size   = Boxsize; % automatically assign the height
 DefAns(1).Frequency = '1e3';
 
-Prompt(9,:)         = {'Agilent Beeper on/ off ?','BeepOrNotToBeep',[]};
-Formats(9,1).type   = 'list';
-Formats(9,1).format = 'text';
-Formats(9,1).style  = 'radiobutton';
-Formats(9,1).items  = {'ON' 'OFF'};
+Prompt(11,:)         = {'Agilent Beeper on/ off ?','BeepOrNotToBeep',[]};
+Formats(11,1).type   = 'list';
+Formats(11,1).format = 'text';
+Formats(11,1).style  = 'radiobutton';
+Formats(11,1).items  = {'ON' 'OFF'};
 DefAns(1).BeepOrNotToBeep    = 'OFF';
 
 [answer, cancelled] = inputsdlg(Prompt,Title,Formats,DefAns,Options);
@@ -118,6 +132,8 @@ n_repeats = answer.NMeas;
 n_points = answer.MeasSteps;
 Vinit = answer.InitialVoltage;
 Vfinal = answer.FinalVoltage;
+VoltagePath = answer.VoltPath;
+FileSpecified = answer.FileVoltages;
 meas_delay = answer.MeasDelay;
 beep=answer.BeepOrNotToBeep;
 freq = answer.Frequency;
@@ -269,7 +285,12 @@ cancelation = 0;
 % setting the V sourcing
 
 % voltage points
-voltages = linspace(Vinit,Vfinal,n_points);
+if(FileSpecified == 'YES')
+    voltages = importdata(VoltagePath);
+else
+    voltages = linspace(Vinit,Vfinal,n_points);
+end
+
 
 
 % Initialization for voltage source
